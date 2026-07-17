@@ -4,7 +4,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Configuration; // Added Import
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -41,8 +42,12 @@ public class SecurityConfig {
                 }))
                 .csrf(csrf -> csrf.disable()) // Disable CSRF for REST APIs
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Allow signup and login without tokens
-                        .anyRequest().authenticated()               // Secure everything else
+                        // 1. Explicitly permit all preflight OPTIONS handshakes globally
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() 
+                        // 2. Permit signup and login without tokens
+                        .requestMatchers("/api/auth/**").permitAll() 
+                        // 3. Secure everything else
+                        .anyRequest().authenticated()               
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
